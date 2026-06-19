@@ -227,7 +227,6 @@ async function uploadLastCertificatePdf(options = {}) {
   }
 
   try {
-    if (!contract) await connectWallet();
     setResult(issueResult, "Generating PDF and uploading it to IPFS...");
 
     const blob = await createCertificatePdfBlob(lastIssuedCertificate);
@@ -259,11 +258,10 @@ async function verifyByManualDetails(event) {
   }
 
   try {
-    if (!contract) await connectWallet();
     const details = getFormDetails(manualVerifyForm);
-    const certificateHash = hashCertificate(details);
-    const result = await contract.verifyCertificate(certificateHash);
-    renderVerificationResult(result, certificateHash);
+    setResult(verifyResult, "Verifying certificate through backend POST...");
+    const payload = await verifyCertificateWithBackend({ details });
+    renderBackendVerificationResult(payload);
   } catch (error) {
     setResult(verifyResult, readableError(error), true);
   }
@@ -277,43 +275,29 @@ async function verifyByTransactionHash(event) {
   }
 
   try {
-    if (!provider) await connectWallet();
     const formData = new FormData(txVerifyForm);
     const txHash = String(formData.get("txHash")).trim();
-    const receipt = await provider.getTransactionReceipt(txHash);
-
-    if (!receipt) {
-      setResult(verifyResult, "Transaction not found on the connected network.", true);
-      return;
-    }
-
-    if (receipt.to?.toLowerCase() !== getContractAddress().toLowerCase()) {
-      setResult(verifyResult, "This transaction was not sent to the configured NCFL certificate contract.", true);
-      return;
-    }
-
-    const iface = new ethers.Interface(CONTRACT_ABI);
-    const issuedLog = receipt.logs
-      .map((log) => {
-        try {
-          return iface.parseLog(log);
-        } catch {
-          return null;
-        }
-      })
-      .find((log) => log?.name === "CertificateIssued");
-
-    if (!issuedLog) {
-      setResult(verifyResult, "No CertificateIssued event was found in this transaction.", true);
-      return;
-    }
-
-    const certificateHash = issuedLog.args.certificateHash;
-    const result = await contract.verifyCertificate(certificateHash);
-    renderVerificationResult(result, certificateHash, txHash);
+    setResult(verifyResult, "Verifying transaction through backend POST...");
+    const payload = await verifyCertificateWithBackend({ txHash });
+    renderBackendVerificationResult(payload);
   } catch (error) {
     setResult(verifyResult, readableError(error), true);
   }
+}
+
+async function verifyCertificateWithBackend(body) {
+  const response = await fetch("/api/verify-certificate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || `Backend verification failed with status ${response.status}`);
+  }
+  return payload;
 }
 
 function renderVerificationResult(result, certificateHash, txHash = "") {
@@ -586,17 +570,7 @@ function prefillFromQr() {
 async function verifyQrWithBackend(details, txHash) {
   try {
     setResult(verifyResult, "Certificate details loaded from QR. Verifying through backend POST...");
-    const response = await fetch("/api/verify-certificate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ details, txHash }),
-    });
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "Backend verification failed.");
-    }
+    const payload = await verifyCertificateWithBackend({ details, txHash });
     renderBackendVerificationResult(payload);
   } catch (error) {
     setResult(verifyResult, `QR backend verification failed: ${readableError(error)}`, true);
