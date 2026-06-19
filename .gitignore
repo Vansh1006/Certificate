@@ -1,0 +1,7 @@
+node_modules/
+.env
+artifacts/
+cache/
+deployments/*.tmp
+data/certificates.json
+.DS_Store

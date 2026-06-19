@@ -1,0 +1,9 @@
+{
+  "network": "amoy",
+  "chainId": 80002,
+  "proxyAddress": "0x475726220A3EB115524D12939f45Fe9e5cF98913",
+  "implementationAddress": "0x664cb437Ce9Cfa66536Cb4De1ca05a69E0185A4b",
+  "proxyAdminAddress": "0x0000000000000000000000000000000000000000",
+  "deployer": "0x32dEF54E9F106dC9613E126B64C09A222d2C9663",
+  "deployedAt": "2026-06-19T08:28:38.340Z"
+}

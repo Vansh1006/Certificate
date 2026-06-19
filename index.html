@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>N-DISC Blockchain Infrastructure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Polygon Amoy Testnet</p>
+          <h1>N-DISC Blockchain Infrastructure</h1>
+          <p class="subhead">
+            Issue tamper-proof internship certificates, anchor them on-chain,
+            and verify authenticity through a transaction hash, manual details,
+            or a certificate QR code.
+          </p>
+          <div class="hero-actions">
+            <button class="primary" id="connectWalletBtn">Connect MetaMask</button>
+            <a class="ghost" href="https://amoy.polygonscan.com" target="_blank" rel="noreferrer">Open Polygon Explorer</a>
+          </div>
+          <div class="wallet-pill" id="walletStatus">Wallet not connected</div>
+          <label class="contract-config">
+            Deployed Contract Address
+            <input id="contractAddressInput" readonly placeholder="Loaded from backend .env" />
+          </label>
+          <div class="wallet-pill" id="storageStatus">Cloud storage checking...</div>
+        </div>
+        <div class="hero-visual" aria-label="Blockchain certificate preview">
+          <div class="cert-glass">
+            <span>NCFL</span>
+            <strong>Verified Internship Credential</strong>
+            <small>Secured by Polygon Amoy</small>
+            <div class="chain-row">
+              <i></i><i></i><i></i><i></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tabs" aria-label="Certificate actions">
+        <button class="tab active" data-tab="create">Create Certificate</button>
+        <button class="tab" data-tab="verify">Verify Certificate</button>
+      </section>
+
+      <section class="panel active" id="createPanel">
+        <div class="section-title">
+          <p class="eyebrow">Issuer Console</p>
+          <h2>Generate a new internship certificate</h2>
+        </div>
+        <form id="issueForm" class="form-grid">
+          <label>
+            Student Name
+            <input name="studentName" required placeholder="Aarav Sharma" />
+          </label>
+          <label>
+            Internship Title
+            <input name="internshipTitle" required placeholder="Blockchain Development Intern" />
+          </label>
+          <label>
+            Issuer / Organization
+            <input name="issuerName" required placeholder="NCFL" />
+          </label>
+          <label>
+            Certificate ID
+            <input name="certificateId" required placeholder="NCFL-AMOY-2026-001" />
+          </label>
+          <label>
+            Start Date
+            <input name="startDate" required type="date" />
+          </label>
+          <label>
+            End Date
+            <input name="endDate" required type="date" />
+          </label>
+          <label class="wide">
+            Skills / Description
+            <textarea name="description" required placeholder="Completed a supervised internship covering smart contracts, dApp development, wallet integration, and certificate verification workflows."></textarea>
+          </label>
+          <div class="wide actions">
+            <button class="primary" type="submit">Create On-Chain Certificate</button>
+            <button class="secondary" id="downloadPdfBtn" type="button" disabled>Download Certificate PDF</button>
+            <button class="secondary" id="uploadPdfBtn" type="button" disabled>Upload PDF to IPFS</button>
+          </div>
+        </form>
+        <div class="result" id="issueResult" hidden></div>
+      </section>
+
+      <section class="panel" id="verifyPanel">
+        <div class="section-title">
+          <p class="eyebrow">Verifier Console</p>
+          <h2>Verify a certificate</h2>
+        </div>
+        <div class="verify-grid">
+          <form id="txVerifyForm" class="verify-box">
+            <h3>Verify by transaction hash</h3>
+            <label>
+              Transaction Hash
+              <input name="txHash" required placeholder="0x..." />
+            </label>
+            <button class="primary" type="submit">Verify Transaction</button>
+          </form>
+
+          <form id="manualVerifyForm" class="verify-box">
+            <h3>Verify by certificate details</h3>
+            <label>
+              Student Name
+              <input name="studentName" required />
+            </label>
+            <label>
+              Internship Title
+              <input name="internshipTitle" required />
+            </label>
+            <label>
+              Issuer / Organization
+              <input name="issuerName" required />
+            </label>
+            <label>
+              Certificate ID
+              <input name="certificateId" required />
+            </label>
+            <label>
+              Start Date
+              <input name="startDate" required type="date" />
+            </label>
+            <label>
+              End Date
+              <input name="endDate" required type="date" />
+            </label>
+            <label>
+              Skills / Description
+              <textarea name="description" required></textarea>
+            </label>
+            <button class="primary" type="submit">Verify Details</button>
+          </form>
+        </div>
+        <div class="result" id="verifyResult" hidden></div>
+        <div class="certificate-preview" id="qrCertificatePreview" hidden></div>
+      </section>
+    </main>
+
+    <script src="vendor/ethers.umd.min.js"></script>
+    <script src="vendor/qrcode.js"></script>
+    <script src="vendor/jspdf.umd.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
