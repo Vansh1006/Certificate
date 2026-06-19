@@ -289,21 +289,6 @@ button:disabled {
   pointer-events: none;
 }
 
-.credential-card::after {
-  content: "";
-  position: absolute;
-  top: 82px;
-  right: 30px;
-  width: 76px;
-  height: 76px;
-  border-radius: 18px;
-  background:
-    linear-gradient(90deg, rgba(16, 32, 51, 0.18) 5px, transparent 5px) 0 0 / 14px 14px,
-    linear-gradient(rgba(16, 32, 51, 0.18) 5px, transparent 5px) 0 0 / 14px 14px,
-    rgba(255, 255, 255, 0.88);
-  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.2);
-}
-
 .credential-topline {
   position: relative;
   z-index: 1;
