@@ -12,6 +12,8 @@ services:
         value: https://rpc-amoy.polygon.technology
       - key: IPFS_GATEWAY
         value: https://gateway.pinata.cloud/ipfs
+      - key: PUBLIC_APP_URL
+        value: https://ncfl-blockchain-verification.onrender.com
       - key: PINATA_JWT
         sync: false
       - key: PINATA_API_KEY

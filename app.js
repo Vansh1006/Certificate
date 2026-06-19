@@ -4,6 +4,7 @@ const AMOY_EXPLORER = "https://amoy.polygonscan.com";
 let ipfsGateway = "https://gateway.pinata.cloud/ipfs";
 let backendStorageEnabled = false;
 let defaultContractAddress = "";
+let publicAppUrl = "https://ncfl-blockchain-verification.onrender.com";
 
 const CONTRACT_ABI = [
   "event CertificateIssued(bytes32 indexed certificateHash,address indexed issuer,string metadataURI,uint256 issuedAt)",
@@ -77,6 +78,7 @@ async function loadBackendConfig() {
     const config = await response.json();
     defaultContractAddress = config.contractAddress || "";
     ipfsGateway = config.ipfsGateway || ipfsGateway;
+    publicAppUrl = config.publicAppUrl || publicAppUrl;
     backendStorageEnabled = Boolean(config.storageEnabled);
     contractAddressInput.value = defaultContractAddress;
     storageStatus.textContent = backendStorageEnabled
@@ -524,17 +526,9 @@ function certificateFileName(certificate) {
 function buildVerificationUrl(certificate) {
   const params = new URLSearchParams({
     verify: "1",
-    studentName: certificate.studentName || "",
-    internshipTitle: certificate.internshipTitle || "",
-    issuerName: certificate.issuerName || "",
-    certificateId: certificate.certificateId || "",
-    startDate: certificate.startDate || "",
-    endDate: certificate.endDate || "",
-    description: certificate.description || "",
     txHash: certificate.txHash || "",
-    contractAddress: certificate.contractAddress || getContractAddress(),
   });
-  return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  return `${publicAppUrl.replace(/\/$/, "")}/?${params.toString()}`;
 }
 
 function prefillFromQr() {
@@ -542,29 +536,19 @@ function prefillFromQr() {
   if (params.get("verify") !== "1") return;
 
   document.querySelector('[data-tab="verify"]').click();
-  ["studentName", "internshipTitle", "issuerName", "certificateId", "startDate", "endDate", "description"].forEach((field) => {
-    const input = manualVerifyForm.elements[field];
-    if (input && params.get(field)) input.value = params.get(field);
-  });
   if (params.get("txHash")) txVerifyForm.elements.txHash.value = params.get("txHash");
-
-  const details = getFormDetails(manualVerifyForm);
 
   qrCertificatePreview.hidden = false;
   qrCertificatePreview.innerHTML = `
     <p class="eyebrow">QR Certificate View</p>
-    <h3>Reconstructed certificate details</h3>
-    <div class="name">${escapeHtml(details.studentName)}</div>
-    <p>${escapeHtml(details.internshipTitle)} issued by ${escapeHtml(details.issuerName)}</p>
+    <h3>Blockchain verification link</h3>
+    <p>This QR code carries only the blockchain transaction reference.</p>
     <dl>
-      <dt>Certificate ID</dt><dd>${escapeHtml(details.certificateId)}</dd>
-      <dt>Duration</dt><dd>${escapeHtml(formatDate(details.startDate))} to ${escapeHtml(formatDate(details.endDate))}</dd>
-      <dt>Description</dt><dd>${escapeHtml(details.description)}</dd>
       ${params.get("txHash") ? `<dt>Transaction</dt><dd><a href="${AMOY_EXPLORER}/tx/${params.get("txHash")}" target="_blank" rel="noreferrer">${escapeHtml(params.get("txHash"))}</a></dd>` : ""}
     </dl>
   `;
-  setResult(verifyResult, "Certificate details were loaded from the QR code. Connect MetaMask and run verification to confirm the hash on Polygon Amoy.");
-  verifyQrWithBackend(details, params.get("txHash") || "");
+  setResult(verifyResult, "Transaction hash loaded from QR. Verifying through backend POST...");
+  verifyQrWithBackend({}, params.get("txHash") || "");
 }
 
 async function verifyQrWithBackend(details, txHash) {
