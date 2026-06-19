@@ -275,6 +275,7 @@ function pinataHeaders() {
 
 function hashCertificate(details) {
   const cleanDetails = {
+    certificateTitle: clean(details.certificateTitle),
     studentName: clean(details.studentName),
     internshipTitle: clean(details.internshipTitle),
     issuerName: clean(details.issuerName),
@@ -286,8 +287,9 @@ function hashCertificate(details) {
 
   return ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(
-      ["string", "string", "string", "string", "string", "string", "string"],
+      ["string", "string", "string", "string", "string", "string", "string", "string"],
       [
+        cleanDetails.certificateTitle,
         cleanDetails.studentName,
         cleanDetails.internshipTitle,
         cleanDetails.issuerName,

@@ -280,6 +280,7 @@ function resolveCertificatePdfUrl(payload) {
 function getFormDetails(form) {
   const data = new FormData(form);
   return {
+    certificateTitle: clean(data.get("certificateTitle")),
     studentName: clean(data.get("studentName")),
     internshipTitle: clean(data.get("internshipTitle")),
     issuerName: clean(data.get("issuerName")),
@@ -297,8 +298,9 @@ function clean(value) {
 function hashCertificate(details) {
   return ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(
-      ["string", "string", "string", "string", "string", "string", "string"],
+      ["string", "string", "string", "string", "string", "string", "string", "string"],
       [
+        details.certificateTitle,
         details.studentName,
         details.internshipTitle,
         details.issuerName,
@@ -345,7 +347,7 @@ async function createCertificatePdfBlob(certificate) {
 
   pdf.setFontSize(18);
   pdf.setTextColor(96, 112, 134);
-  pdf.text("Certificate of Internship Completion", width / 2, 126, { align: "center" });
+  pdf.text(certificate.certificateTitle || "Certificate", width / 2, 126, { align: "center" });
 
   pdf.setFont("times", "normal");
   pdf.setFontSize(16);
@@ -378,9 +380,9 @@ async function createCertificatePdfBlob(certificate) {
   pdf.text(`Issued by: ${certificate.issuerName || "N-DISC"}`, 90, 486);
   pdf.text(`Certificate ID: ${certificate.certificateId || "NDISC-CERT"}`, 90, 512);
 
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  pdf.setTextColor(96, 112, 134);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.setTextColor(16, 32, 51);
   pdf.text(`Blockchain hash: ${certificate.certificateHash || "Pending"}`, 90, 540);
   pdf.text(`Transaction: ${certificate.txHash || "Pending"}`, 90, 556);
 
