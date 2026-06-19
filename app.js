@@ -375,19 +375,18 @@ async function createCertificatePdfBlob(certificate) {
   pdf.text(description, width / 2, 350, { align: "center" });
 
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(16, 32, 51);
-  pdf.text(`Duration: ${formatDate(certificate.startDate)} to ${formatDate(certificate.endDate)}`, 90, 460);
-  pdf.text(`Issued by: ${certificate.issuerName || "N-DISC"}`, 90, 486);
-  pdf.text(`Certificate ID: ${certificate.certificateId || "NDISC-CERT"}`, 90, 512);
-
-  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
   pdf.setTextColor(16, 32, 51);
-  pdf.text(`Blockchain hash: ${certificate.certificateHash || "Pending"}`, 90, 540);
-  pdf.text(`Transaction: ${certificate.txHash || "Pending"}`, 90, 556);
+  pdf.text(`Duration: ${formatDate(certificate.startDate)} to ${formatDate(certificate.endDate)}`, 90, 400);
+  pdf.text(`Issued by: ${certificate.issuerName || "N-DISC"}`, 90, 426);
+  pdf.text(`Certificate ID: ${certificate.certificateId || "NDISC-CERT"}`, 90, 452);
+  pdf.setFontSize(8.5);
+  drawWrappedMetadataLine(pdf, "Block ID", certificate.certificateHash || "Pending", 90, 478, 330);
+  drawWrappedMetadataLine(pdf, "Transaction Hash", certificate.txHash || "Pending", 90, 510, 330);
 
   pdf.addImage(qrDataUrl, "PNG", width - 190, height - 210, 116, 116);
   pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
   pdf.setTextColor(11, 107, 203);
   pdf.text("Scan to verify on blockchain", width - 132, height - 82, { align: "center" });
 
@@ -420,6 +419,15 @@ async function uploadPdfToBackend(blob, fileName, certificate) {
   }
 
   return response.json();
+}
+
+function drawWrappedMetadataLine(pdf, label, value, x, y, maxWidth) {
+  const labelText = `${label}:`;
+  const labelWidth = pdf.getTextWidth(labelText) + 4;
+  const wrappedValue = pdf.splitTextToSize(String(value || "Pending"), maxWidth - labelWidth);
+
+  pdf.text(labelText, x, y);
+  pdf.text(wrappedValue, x + labelWidth, y);
 }
 
 async function blobToBase64(blob) {
