@@ -228,7 +228,7 @@ app.post("/api/verify-certificate", async (req, res) => {
 
     const result = await contract.verifyCertificate(hashToVerify);
     const [valid, revoked, issuer, issuedAt, revokedAt, metadataURI] = result;
-    const storedFile = findCertificateFileRecord(hashToVerify, txHash);
+    const storedFile = await findCertificateFileRecord(hashToVerify, txHash);
     const resolvedMetadataURI = isDownloadableURI(metadataURI)
       ? metadataURI
       : storedFile?.ipfsURI || metadataURI;
@@ -339,13 +339,55 @@ function saveCertificateFileRecord(record) {
   fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
 }
 
-function findCertificateFileRecord(certificateHash, txHash) {
+async function findCertificateFileRecord(certificateHash, txHash) {
   const registry = readCertificateFileRegistry();
-  return (
+  const localRecord =
     registry[String(certificateHash || "").toLowerCase()] ||
     registry[String(txHash || "").toLowerCase()] ||
+    null;
+
+  if (localRecord) return localRecord;
+  if (!hasPinataCredentials()) return null;
+
+  return (
+    (txHash && await findPinataCertificateFile("txHash", txHash)) ||
+    (certificateHash && await findPinataCertificateFile("certificateHash", certificateHash)) ||
     null
   );
+}
+
+async function findPinataCertificateFile(key, value) {
+  const params = new URLSearchParams({
+    status: "pinned",
+    pageLimit: "1",
+  });
+  params.set("metadata[keyvalues]", JSON.stringify({
+    [key]: {
+      value: String(value || ""),
+      op: "eq",
+    },
+  }));
+
+  const response = await fetch(`https://api.pinata.cloud/data/pinList?${params.toString()}`, {
+    headers: pinataHeaders(),
+  });
+  if (!response.ok) return null;
+
+  const payload = await response.json().catch(() => ({}));
+  const row = payload.rows?.[0];
+  if (!row?.ipfs_pin_hash) return null;
+
+  const gateway = process.env.IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs";
+  const record = {
+    certificateHash: row.metadata?.keyvalues?.certificateHash || "",
+    txHash: row.metadata?.keyvalues?.txHash || "",
+    fileName: row.metadata?.name || `${row.ipfs_pin_hash}.pdf`,
+    ipfsURI: `ipfs://${row.ipfs_pin_hash}`,
+    gatewayURL: `${gateway}/${row.ipfs_pin_hash}`,
+    uploadedAt: row.date_pinned || "",
+  };
+  saveCertificateFileRecord(record);
+  return record;
 }
 
 function readCertificateFileRegistry() {

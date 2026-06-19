@@ -333,6 +333,20 @@ textarea:focus {
   font-weight: 800;
 }
 
+.verify-actions {
+  margin-top: 14px;
+}
+
+.result-action {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .certificate-preview {
   margin-top: 18px;
   border: 1px solid rgba(201, 151, 47, 0.55);

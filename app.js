@@ -249,9 +249,9 @@ function renderBackendVerificationResult(payload, element = verifyResult) {
     return;
   }
 
-  const metadataURI = payload.metadataURI || "";
-  const downloadLink = metadataURI && isDownloadableURI(metadataURI)
-    ? `<br />Certificate PDF: <a href="${ipfsToGatewayUrl(metadataURI)}" target="_blank" rel="noreferrer">Download stored certificate</a>`
+  const certificatePdfUrl = resolveCertificatePdfUrl(payload);
+  const downloadLink = certificatePdfUrl
+    ? `<div class="verify-actions"><a class="secondary result-action" href="${escapeHtml(certificatePdfUrl)}" target="_blank" rel="noreferrer" download>Download Certificate PDF</a></div>`
     : "";
 
   setResult(
@@ -263,6 +263,18 @@ function renderBackendVerificationResult(payload, element = verifyResult) {
     ${downloadLink}
     ${payload.txHash ? `<br />Transaction: <a href="${AMOY_EXPLORER}/tx/${payload.txHash}" target="_blank" rel="noreferrer">${escapeHtml(payload.txHash)}</a>` : ""}`
   );
+}
+
+function resolveCertificatePdfUrl(payload) {
+  const storedFile = payload.storedFile || {};
+  if (storedFile.gatewayURL) return storedFile.gatewayURL;
+  if (storedFile.ipfsURI && isDownloadableURI(storedFile.ipfsURI)) {
+    return ipfsToGatewayUrl(storedFile.ipfsURI);
+  }
+  if (payload.metadataURI && isDownloadableURI(payload.metadataURI)) {
+    return ipfsToGatewayUrl(payload.metadataURI);
+  }
+  return "";
 }
 
 function getFormDetails(form) {
