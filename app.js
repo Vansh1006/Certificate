@@ -1,4 +1,3 @@
-const AMOY_CHAIN_ID_HEX = "0x13882";
 const AMOY_CHAIN_ID_DECIMAL = 80002;
 const AMOY_EXPLORER = "https://amoy.polygonscan.com";
 let ipfsGateway = "https://gateway.pinata.cloud/ipfs";
@@ -6,24 +5,8 @@ let backendStorageEnabled = false;
 let defaultContractAddress = "";
 let publicAppUrl = "https://ndisk-blockchain-infrastructure.onrender.com";
 
-const CONTRACT_ABI = [
-  "event CertificateIssued(bytes32 indexed certificateHash,address indexed issuer,string metadataURI,uint256 issuedAt)",
-  "event CertificateRevoked(bytes32 indexed certificateHash,address indexed revokedBy,string reason,uint256 revokedAt)",
-  "event CertificateMetadataUpdated(bytes32 indexed certificateHash,address indexed updatedBy,string metadataURI)",
-  "function issueCertificate(bytes32 certificateHash,string metadataURI)",
-  "function certificateExists(bytes32 certificateHash) view returns (bool)",
-  "function verifyCertificate(bytes32 certificateHash) view returns (bool valid,bool revoked,address issuer,uint256 issuedAt,uint256 revokedAt,string metadataURI)",
-  "function hasRole(bytes32 role,address account) view returns (bool)",
-  "function ISSUER_ROLE() view returns (bytes32)",
-];
-
-let provider;
-let signer;
-let contract;
 let lastIssuedCertificate = null;
 
-const walletStatus = document.querySelector("#walletStatus");
-const connectWalletBtn = document.querySelector("#connectWalletBtn");
 const issueForm = document.querySelector("#issueForm");
 const txVerifyForm = document.querySelector("#txVerifyForm");
 const manualVerifyForm = document.querySelector("#manualVerifyForm");
@@ -44,7 +27,6 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
-connectWalletBtn.addEventListener("click", connectWallet);
 issueForm.addEventListener("submit", issueCertificate);
 txVerifyForm.addEventListener("submit", verifyByTransactionHash);
 manualVerifyForm.addEventListener("submit", verifyByManualDetails);
@@ -89,69 +71,10 @@ async function loadBackendConfig() {
   }
 }
 
-async function connectWallet() {
-  if (!window.ethereum) {
-    setResult(issueResult, "MetaMask is required. Please install MetaMask and retry.", true);
-    return;
-  }
-
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-  await ensureAmoyNetwork();
-
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  contract = new ethers.Contract(getContractAddress(), CONTRACT_ABI, signer);
-
-  const address = await signer.getAddress();
-  walletStatus.textContent = `Connected: ${shortAddress(address)} on Polygon Amoy`;
-}
-
-async function assertIssuerPermission() {
-  const address = await signer.getAddress();
-  try {
-    const issuerRole = await contract.ISSUER_ROLE();
-    const canIssue = await contract.hasRole(issuerRole, address);
-    if (!canIssue) {
-      throw new Error(`Connected wallet ${address} does not have ISSUER_ROLE on this contract. Grant issuer role to this address or switch MetaMask to the deployer/admin wallet.`);
-    }
-  } catch (error) {
-    if (error.message?.includes("ISSUER_ROLE") || error.message?.includes("does not have")) {
-      throw error;
-    }
-    throw new Error("This contract address does not look like the scalable NCFL verifier contract. Deploy/use the updated contract address from this project.");
-  }
-}
-
-async function ensureAmoyNetwork() {
-  const chainId = await window.ethereum.request({ method: "eth_chainId" });
-  if (chainId === AMOY_CHAIN_ID_HEX) return;
-
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: AMOY_CHAIN_ID_HEX }],
-    });
-  } catch (error) {
-    if (error.code !== 4902) throw error;
-    await window.ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [
-        {
-          chainId: AMOY_CHAIN_ID_HEX,
-          chainName: "Polygon Amoy",
-          nativeCurrency: { name: "POL", symbol: "POL", decimals: 18 },
-          rpcUrls: ["https://rpc-amoy.polygon.technology"],
-          blockExplorerUrls: [AMOY_EXPLORER],
-        },
-      ],
-    });
-  }
-}
-
 async function issueCertificate(event) {
   event.preventDefault();
   if (!isContractConfigured()) {
-    setResult(issueResult, "Deploy the smart contract and paste the proxy address into the Deployed Contract Address field before issuing certificates.", true);
+    setResult(issueResult, "N-DISC's official smart contract is not configured on the backend. Add CONTRACT_ADDRESS to the backend environment before issuing certificates.", true);
     return;
   }
 
@@ -207,18 +130,6 @@ async function issueCertificateFromBackend(details) {
   return payload;
 }
 
-async function assertCertificateIsNew(certificateHash) {
-  try {
-    const exists = await contract.certificateExists(certificateHash);
-    if (exists) {
-      throw new Error(`This certificate already exists on-chain. Certificate hash: ${certificateHash}. Change the Certificate ID or details, or verify the existing certificate instead.`);
-    }
-  } catch (error) {
-    if (error.message?.includes("already exists")) throw error;
-    throw new Error("Could not check whether this certificate already exists. Confirm the configured contract address is the latest NCFL verifier contract.");
-  }
-}
-
 async function uploadLastCertificatePdf(options = {}) {
   if (!lastIssuedCertificate) return "";
 
@@ -255,7 +166,7 @@ async function uploadLastCertificatePdf(options = {}) {
 async function verifyByManualDetails(event) {
   event.preventDefault();
   if (!isContractConfigured()) {
-    setResult(verifyResult, "Deploy the smart contract and paste the proxy address into the Deployed Contract Address field before verification.", true);
+    setResult(verifyResult, "N-DISC's official smart contract is not configured on the backend. Add CONTRACT_ADDRESS to the backend environment before verification.", true);
     return;
   }
 
@@ -272,7 +183,7 @@ async function verifyByManualDetails(event) {
 async function verifyByTransactionHash(event) {
   event.preventDefault();
   if (!isContractConfigured()) {
-    setResult(verifyResult, "Deploy the smart contract and paste the proxy address into the Deployed Contract Address field before transaction verification.", true);
+    setResult(verifyResult, "N-DISC's official smart contract is not configured on the backend. Add CONTRACT_ADDRESS to the backend environment before transaction verification.", true);
     return;
   }
 
@@ -452,8 +363,8 @@ async function createCertificatePdfBlob(certificate) {
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(16, 32, 51);
   pdf.text(`Duration: ${formatDate(certificate.startDate)} to ${formatDate(certificate.endDate)}`, 90, 460);
-  pdf.text(`Issued by: ${certificate.issuerName || "NCFL"}`, 90, 486);
-  pdf.text(`Certificate ID: ${certificate.certificateId || "NCFL-CERT"}`, 90, 512);
+  pdf.text(`Issued by: ${certificate.issuerName || "N-DISC"}`, 90, 486);
+  pdf.text(`Certificate ID: ${certificate.certificateId || "NDISC-CERT"}`, 90, 512);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
@@ -579,10 +490,10 @@ function setResult(element, html, isError = false) {
 function readableError(error) {
   const raw = error?.shortMessage || error?.reason || error?.message || "Something went wrong.";
   if (raw.includes("could not coalesce error")) {
-    return "Blockchain transaction failed. The app now checks issuer role and duplicate certificates before opening MetaMask; reload the page and try again to see the exact cause.";
+    return "Blockchain transaction failed. The backend checks issuer role and duplicate certificates before submitting the transaction; reload the page and try again to see the exact cause.";
   }
   if (raw.includes("AccessControlUnauthorizedAccount")) {
-    return "Your connected wallet is not approved to issue certificates. Use the admin/deployer wallet or grant ISSUER_ROLE.";
+    return "The backend issuer wallet is not approved to issue certificates. Grant ISSUER_ROLE to the backend issuer wallet from the admin/deployer wallet.";
   }
   if (raw.includes("Already issued")) {
     return "This certificate already exists on-chain. Change the certificate ID/details or verify the existing certificate.";
@@ -596,10 +507,6 @@ function isContractConfigured() {
 
 function getContractAddress() {
   return contractAddressInput.value.trim() || defaultContractAddress;
-}
-
-function shortAddress(address) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 function formatDate(dateString) {

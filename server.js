@@ -53,7 +53,7 @@ app.post("/api/upload-certificate", async (req, res) => {
       JSON.stringify({
         name: fileName,
         keyvalues: {
-          project: "NCFL Blockchain Verification System",
+          project: "N-DISC Blockchain Infrastructure",
           txHash: txHash || "",
           certificateHash: certificateHash || "",
         },
@@ -131,7 +131,7 @@ app.post("/api/issue-certificate", async (req, res) => {
       });
     }
 
-    const metadataURI = `urn:ncfl:pending:${certificateHash}`;
+    const metadataURI = `urn:ndisc:pending:${certificateHash}`;
     await contract.issueCertificate.staticCall(certificateHash, metadataURI);
     const tx = await contract.issueCertificate(certificateHash, metadataURI);
     const receipt = await tx.wait();
@@ -194,7 +194,7 @@ app.post("/api/verify-certificate", async (req, res) => {
         return res.status(404).json({ error: "Transaction not found on Polygon Amoy." });
       }
       if (receipt.to?.toLowerCase() !== contractAddress.toLowerCase()) {
-        return res.status(400).json({ error: "Transaction was not sent to the NCFL verifier contract." });
+        return res.status(400).json({ error: "Transaction was not sent to the N-DISC verifier contract." });
       }
 
       const iface = new ethers.Interface(verifierAbi);
@@ -252,7 +252,7 @@ app.post("/api/verify-certificate", async (req, res) => {
 app.use(express.static(publicDir));
 
 app.listen(port, () => {
-  console.log(`NCFL app running at http://localhost:${port}`);
+  console.log(`N-DISC app running at http://localhost:${port}`);
 });
 
 function hasPinataCredentials() {
