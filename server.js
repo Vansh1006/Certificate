@@ -26,7 +26,7 @@ app.get("/api/config", (_req, res) => {
     contractAddress: process.env.CONTRACT_ADDRESS || "",
     chainId: 80002,
     ipfsGateway: process.env.IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs",
-    publicAppUrl: process.env.PUBLIC_APP_URL || "https://ndisk-blockchain-infrastructure.onrender.com",
+    publicAppUrl: process.env.PUBLIC_APP_URL || "https://ndisc-blockchain-infrastructure.onrender.com",
     storageEnabled: hasPinataCredentials(),
   });
 });

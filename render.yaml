@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ndisk-blockchain-infrastructure
+    name: ndisc-blockchain-infrastructure
     env: node
     plan: free
     buildCommand: npm install
@@ -13,7 +13,7 @@ services:
       - key: IPFS_GATEWAY
         value: https://gateway.pinata.cloud/ipfs
       - key: PUBLIC_APP_URL
-        value: https://ndisk-blockchain-infrastructure.onrender.com
+        value: https://ndisc-blockchain-infrastructure.onrender.com
       - key: PINATA_JWT
         sync: false
       - key: PINATA_API_KEY
