@@ -48,7 +48,7 @@ textarea {
 .hero-copy,
 .hero-visual,
 .panel,
-.tabs {
+.route-card {
   border: 1px solid rgba(255, 255, 255, 0.72);
   background: var(--panel);
   box-shadow: var(--shadow);
@@ -114,7 +114,7 @@ h3 {
 
 button,
 .ghost,
-.tab {
+.route-card {
   min-height: 46px;
   border: 0;
   border-radius: 8px;
@@ -452,24 +452,99 @@ button:disabled {
   font-size: 0.82rem;
 }
 
-.tabs {
-  display: flex;
-  gap: 8px;
+.route-actions {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
   margin: 26px 0 16px;
+}
+
+.route-actions.active {
+  display: grid;
+}
+
+.route-card {
+  position: relative;
+  display: block;
+  min-height: 168px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 18px;
+  padding: 26px;
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.route-card::before {
+  content: "";
+  position: absolute;
+  inset: auto -70px -100px auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(11, 107, 203, 0.18);
+}
+
+.route-card::after {
+  content: "";
+  position: absolute;
+  right: 26px;
+  top: 26px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(11, 107, 203, 0.22);
   border-radius: 14px;
-  padding: 8px;
+  background:
+    linear-gradient(90deg, rgba(11, 107, 203, 0.16) 3px, transparent 3px) 0 0 / 12px 12px,
+    linear-gradient(rgba(11, 107, 203, 0.16) 3px, transparent 3px) 0 0 / 12px 12px,
+    rgba(230, 241, 255, 0.92);
 }
 
-.tab {
-  flex: 1;
-  color: var(--muted);
-  background: transparent;
-  text-align: center;
+.route-card span,
+.route-card strong,
+.route-card small {
+  position: relative;
+  z-index: 1;
 }
 
-.tab.active {
+.route-card span {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
   color: white;
   background: var(--ink);
+  font-weight: 900;
+}
+
+.route-card strong {
+  display: block;
+  margin-top: 22px;
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+}
+
+.route-card small {
+  display: block;
+  max-width: 440px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.route-card-verify::before {
+  background: rgba(18, 185, 129, 0.18);
+}
+
+.route-card-verify::after {
+  border-color: rgba(18, 185, 129, 0.28);
+  background:
+    radial-gradient(circle, rgba(18, 185, 129, 0.9) 0 4px, transparent 5px) 8px 8px / 18px 18px,
+    rgba(232, 247, 242, 0.92);
 }
 
 .panel {
@@ -491,6 +566,11 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.verify-grid.verifier-only {
+  grid-template-columns: minmax(0, 620px);
+  justify-content: center;
 }
 
 label {
@@ -654,8 +734,8 @@ textarea:focus {
     border-radius: 14px;
   }
 
-  .tabs {
-    flex-direction: column;
+  .route-actions.active {
+    grid-template-columns: 1fr;
   }
 
   .certificate-preview dl {

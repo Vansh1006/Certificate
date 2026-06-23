@@ -9,7 +9,6 @@ let lastIssuedCertificate = null;
 
 const issueForm = document.querySelector("#issueForm");
 const txVerifyForm = document.querySelector("#txVerifyForm");
-const manualVerifyForm = document.querySelector("#manualVerifyForm");
 const issueResult = document.querySelector("#issueResult");
 const verifyResult = document.querySelector("#verifyResult");
 const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
@@ -20,7 +19,6 @@ const qrCertificatePreview = document.querySelector("#qrCertificatePreview");
 
 issueForm?.addEventListener("submit", issueCertificate);
 txVerifyForm?.addEventListener("submit", verifyByTransactionHash);
-manualVerifyForm?.addEventListener("submit", verifyByManualDetails);
 
 downloadPdfBtn?.addEventListener("click", async () => {
   if (!lastIssuedCertificate) return;
@@ -65,17 +63,21 @@ async function loadBackendConfig() {
 
 function applyPageMode() {
   const mode = currentPageMode();
-  document.querySelectorAll("[data-route-tab]").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.routeTab === mode);
-  });
+  const homeActions = document.querySelector("#homeActions");
+  if (mode === "home") {
+    homeActions?.classList.add("active");
+  } else {
+    homeActions?.remove();
+  }
   document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-  document.querySelector(`#${mode}Panel`)?.classList.add("active");
+  if (mode !== "home") document.querySelector(`#${mode}Panel`)?.classList.add("active");
   document.body.dataset.pageMode = mode;
 }
 
 function currentPageMode() {
   if (window.location.pathname.startsWith("/verify")) return "verify";
-  return "create";
+  if (window.location.pathname.startsWith("/create")) return "create";
+  return "home";
 }
 
 async function issueCertificate(event) {
@@ -167,23 +169,6 @@ async function uploadLastCertificatePdf(options = {}) {
     const message = `Cloud upload failed: ${readableError(error)}. Local PDF download still works.`;
     if (!options.silent) setResult(issueResult, message, true);
     return `<br />${message}`;
-  }
-}
-
-async function verifyByManualDetails(event) {
-  event.preventDefault();
-  if (!isContractConfigured()) {
-    setResult(verifyResult, "N-DISC's official smart contract is not configured on the backend. Add CONTRACT_ADDRESS to the backend environment before verification.", true);
-    return;
-  }
-
-  try {
-    const details = getFormDetails(manualVerifyForm);
-    setResult(verifyResult, "Verifying certificate through backend POST...");
-    const payload = await verifyCertificateWithBackend({ details });
-    renderBackendVerificationResult(payload);
-  } catch (error) {
-    setResult(verifyResult, readableError(error), true);
   }
 }
 
