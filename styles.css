@@ -113,7 +113,8 @@ h3 {
 }
 
 button,
-.ghost {
+.ghost,
+.tab {
   min-height: 46px;
   border: 0;
   border-radius: 8px;
@@ -463,6 +464,7 @@ button:disabled {
   flex: 1;
   color: var(--muted);
   background: transparent;
+  text-align: center;
 }
 
 .tab.active {

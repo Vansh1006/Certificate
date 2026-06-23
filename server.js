@@ -249,6 +249,10 @@ app.post("/api/verify-certificate", async (req, res) => {
   }
 });
 
+app.get(["/create", "/verify"], (_req, res) => {
+  res.sendFile(path.join(publicDir, "index.html"));
+});
+
 app.use(express.static(publicDir));
 
 app.listen(port, () => {

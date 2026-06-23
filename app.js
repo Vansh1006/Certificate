@@ -18,20 +18,11 @@ const contractAddressInput = document.querySelector("#contractAddressInput");
 const storageStatus = document.querySelector("#storageStatus");
 const qrCertificatePreview = document.querySelector("#qrCertificatePreview");
 
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-    tab.classList.add("active");
-    document.querySelector(`#${tab.dataset.tab}Panel`).classList.add("active");
-  });
-});
+issueForm?.addEventListener("submit", issueCertificate);
+txVerifyForm?.addEventListener("submit", verifyByTransactionHash);
+manualVerifyForm?.addEventListener("submit", verifyByManualDetails);
 
-issueForm.addEventListener("submit", issueCertificate);
-txVerifyForm.addEventListener("submit", verifyByTransactionHash);
-manualVerifyForm.addEventListener("submit", verifyByManualDetails);
-
-downloadPdfBtn.addEventListener("click", async () => {
+downloadPdfBtn?.addEventListener("click", async () => {
   if (!lastIssuedCertificate) return;
   try {
     const blob = await createCertificatePdfBlob(lastIssuedCertificate);
@@ -41,7 +32,7 @@ downloadPdfBtn.addEventListener("click", async () => {
   }
 });
 
-uploadPdfBtn.addEventListener("click", async () => {
+uploadPdfBtn?.addEventListener("click", async () => {
   if (!lastIssuedCertificate) return;
   await uploadLastCertificatePdf();
 });
@@ -50,6 +41,7 @@ init();
 
 async function init() {
   await loadBackendConfig();
+  applyPageMode();
   prefillFromQr();
 }
 
@@ -62,13 +54,28 @@ async function loadBackendConfig() {
     ipfsGateway = config.ipfsGateway || ipfsGateway;
     publicAppUrl = config.publicAppUrl || publicAppUrl;
     backendStorageEnabled = Boolean(config.storageEnabled);
-    contractAddressInput.value = defaultContractAddress;
-    storageStatus.textContent = backendStorageEnabled
+    if (contractAddressInput) contractAddressInput.value = defaultContractAddress;
+    if (storageStatus) storageStatus.textContent = backendStorageEnabled
       ? "Cloud PDF storage enabled on backend"
       : "Cloud storage needs Pinata JWT or API secret in backend .env";
   } catch {
-    storageStatus.textContent = "Backend config unavailable. Start with npm run dev.";
+    if (storageStatus) storageStatus.textContent = "Backend config unavailable. Start with npm run dev.";
   }
+}
+
+function applyPageMode() {
+  const mode = currentPageMode();
+  document.querySelectorAll("[data-route-tab]").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.routeTab === mode);
+  });
+  document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
+  document.querySelector(`#${mode}Panel`)?.classList.add("active");
+  document.body.dataset.pageMode = mode;
+}
+
+function currentPageMode() {
+  if (window.location.pathname.startsWith("/verify")) return "verify";
+  return "create";
 }
 
 async function issueCertificate(event) {
@@ -461,18 +468,23 @@ function buildVerificationUrl(certificate) {
     verify: "1",
     txHash: certificate.txHash || "",
   });
-  return `${publicAppUrl.replace(/\/$/, "")}/?${params.toString()}`;
+  return `${publicAppUrl.replace(/\/$/, "")}/verify?${params.toString()}`;
 }
 
 function prefillFromQr() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("verify") !== "1") return;
 
-  document.querySelector('[data-tab="verify"]').click();
-  if (params.get("txHash")) txVerifyForm.elements.txHash.value = params.get("txHash");
+  if (currentPageMode() !== "verify") {
+    window.location.replace(`/verify?${params.toString()}`);
+    return;
+  }
 
-  qrCertificatePreview.hidden = false;
-  qrCertificatePreview.innerHTML = `
+  if (params.get("txHash") && txVerifyForm) txVerifyForm.elements.txHash.value = params.get("txHash");
+
+  if (qrCertificatePreview) {
+    qrCertificatePreview.hidden = false;
+    qrCertificatePreview.innerHTML = `
     <p class="eyebrow">QR Certificate View</p>
     <h3>Blockchain verification link</h3>
     <p>This QR code carries only the blockchain transaction reference.</p>
@@ -480,6 +492,7 @@ function prefillFromQr() {
       ${params.get("txHash") ? `<dt>Transaction</dt><dd><a href="${AMOY_EXPLORER}/tx/${params.get("txHash")}" target="_blank" rel="noreferrer">${escapeHtml(params.get("txHash"))}</a></dd>` : ""}
     </dl>
   `;
+  }
   setResult(verifyResult, "Transaction hash loaded from QR. Verifying through backend POST...");
   verifyQrWithBackend({}, params.get("txHash") || "");
 }
@@ -504,6 +517,7 @@ function ipfsToGatewayUrl(uri) {
 }
 
 function setResult(element, html, isError = false) {
+  if (!element) return;
   element.hidden = false;
   element.classList.toggle("error", isError);
   element.innerHTML = html;
@@ -528,7 +542,7 @@ function isContractConfigured() {
 }
 
 function getContractAddress() {
-  return contractAddressInput.value.trim() || defaultContractAddress;
+  return contractAddressInput?.value.trim() || defaultContractAddress;
 }
 
 function formatDate(dateString) {
