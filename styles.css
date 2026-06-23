@@ -568,11 +568,6 @@ button:disabled {
   gap: 16px;
 }
 
-.verify-grid.verifier-only {
-  grid-template-columns: minmax(0, 620px);
-  justify-content: center;
-}
-
 label {
   display: grid;
   gap: 8px;

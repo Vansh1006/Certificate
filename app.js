@@ -9,6 +9,7 @@ let lastIssuedCertificate = null;
 
 const issueForm = document.querySelector("#issueForm");
 const txVerifyForm = document.querySelector("#txVerifyForm");
+const manualVerifyForm = document.querySelector("#manualVerifyForm");
 const issueResult = document.querySelector("#issueResult");
 const verifyResult = document.querySelector("#verifyResult");
 const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
@@ -19,6 +20,7 @@ const qrCertificatePreview = document.querySelector("#qrCertificatePreview");
 
 issueForm?.addEventListener("submit", issueCertificate);
 txVerifyForm?.addEventListener("submit", verifyByTransactionHash);
+manualVerifyForm?.addEventListener("submit", verifyByManualDetails);
 
 downloadPdfBtn?.addEventListener("click", async () => {
   if (!lastIssuedCertificate) return;
@@ -184,6 +186,23 @@ async function verifyByTransactionHash(event) {
     const txHash = String(formData.get("txHash")).trim();
     setResult(verifyResult, "Verifying transaction through backend POST...");
     const payload = await verifyCertificateWithBackend({ txHash });
+    renderBackendVerificationResult(payload);
+  } catch (error) {
+    setResult(verifyResult, readableError(error), true);
+  }
+}
+
+async function verifyByManualDetails(event) {
+  event.preventDefault();
+  if (!isContractConfigured()) {
+    setResult(verifyResult, "N-DISC's official smart contract is not configured on the backend. Add CONTRACT_ADDRESS to the backend environment before verification.", true);
+    return;
+  }
+
+  try {
+    const details = getFormDetails(manualVerifyForm);
+    setResult(verifyResult, "Verifying certificate through backend POST...");
+    const payload = await verifyCertificateWithBackend({ details });
     renderBackendVerificationResult(payload);
   } catch (error) {
     setResult(verifyResult, readableError(error), true);
