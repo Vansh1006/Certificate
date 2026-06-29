@@ -3,7 +3,7 @@ const AMOY_EXPLORER = "https://amoy.polygonscan.com";
 let ipfsGateway = "https://gateway.pinata.cloud/ipfs";
 let backendStorageEnabled = false;
 let defaultContractAddress = "";
-let publicAppUrl = "https://ndisc-blockchain-infrastructure.onrender.com";
+let publicAppUrl = "https://ndiscblockchaininfrastructure.onrender.com";
 
 let lastIssuedCertificate = null;
 
