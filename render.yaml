@@ -7,7 +7,7 @@ services:
     startCommand: npm start
     envVars:
       - key: CONTRACT_ADDRESS
-        value: 0x475726220A3EB115524D12939f45Fe9e5cF98913
+        value: 0x85Dbb2B7172A404ea302F66266F7Db19E47709C7
       - key: AMOY_RPC_URL
         value: https://rpc-amoy.polygon.technology
       - key: IPFS_GATEWAY

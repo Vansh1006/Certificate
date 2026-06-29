@@ -5,3 +5,5 @@ cache/
 deployments/*.tmp
 data/certificates.json
 .DS_Store
+output/
+tmp/
