@@ -831,31 +831,56 @@ async function getCertificateImages(form) {
   const signatureFile = form.elements.signatureFile?.files?.[0];
 
   return {
-    logoDataUrl: logoFile ? await readPngFileAsDataUrl(logoFile, "logo") : "",
-    signatureDataUrl: signatureFile ? await readPngFileAsDataUrl(signatureFile, "signature") : "",
+    logoDataUrl: logoFile ? await readPngFileAsDataUrl(logoFile, "logo", 420, 240) : "",
+    signatureDataUrl: signatureFile ? await readPngFileAsDataUrl(signatureFile, "signature", 620, 220) : "",
   };
 }
 
-function readPngFileAsDataUrl(file, label) {
+async function readPngFileAsDataUrl(file, label, maxWidth, maxHeight) {
   if (file.type !== "image/png") {
     throw new Error(`Please upload the ${label} as a PNG file.`);
   }
-  if (file.size > 2 * 1024 * 1024) {
-    throw new Error(`The ${label} PNG must be smaller than 2 MB.`);
+  if (file.size > 8 * 1024 * 1024) {
+    throw new Error(`The ${label} PNG must be smaller than 8 MB.`);
   }
 
-  return new Promise((resolve, reject) => {
+  const dataUrl = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
     reader.onerror = () => reject(new Error(`Could not read the ${label} PNG file.`));
     reader.readAsDataURL(file);
   });
+  return resizePngDataUrl(dataUrl, maxWidth, maxHeight);
 }
 
 function imageDimensions(dataUrl) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve({ width: image.naturalWidth || image.width, height: image.naturalHeight || image.height });
+    image.onerror = () => reject(new Error("Could not load uploaded PNG image."));
+    image.src = dataUrl;
+  });
+}
+
+async function resizePngDataUrl(dataUrl, maxWidth, maxHeight) {
+  const dimensions = await imageDimensions(dataUrl);
+  const scale = Math.min(1, maxWidth / dimensions.width, maxHeight / dimensions.height);
+  if (scale === 1) return dataUrl;
+
+  const image = await loadImage(dataUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(dimensions.width * scale));
+  canvas.height = Math.max(1, Math.round(dimensions.height * scale));
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/png");
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Could not load uploaded PNG image."));
     image.src = dataUrl;
   });

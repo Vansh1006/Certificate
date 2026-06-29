@@ -19,7 +19,7 @@ const verifierAbi = [
   "function verifyCertificate(bytes32 certificateHash) view returns (bool valid,bool revoked,address issuer,uint256 issuedAt,uint256 revokedAt,string metadataURI)",
 ];
 
-app.use(express.json({ limit: "15mb" }));
+app.use(express.json({ limit: "30mb" }));
 
 app.get("/api/config", (_req, res) => {
   res.json({
