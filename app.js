@@ -420,6 +420,9 @@ function renderGlossary() {
   glossaryGrid.querySelectorAll(".glossary-card-toggle").forEach((button) => {
     button.addEventListener("click", () => toggleGlossaryCard(button));
   });
+  glossaryGrid.querySelectorAll(".glossary-card").forEach((card) => {
+    card.addEventListener("pointermove", updateGlossaryCardSpotlight);
+  });
 }
 
 function glossaryCardTemplate(item) {
@@ -460,6 +463,12 @@ function toggleGlossaryCard(button) {
   const isOpen = card.classList.toggle("open");
   button.setAttribute("aria-expanded", String(isOpen));
   body.style.maxHeight = isOpen ? `${body.scrollHeight}px` : "0px";
+}
+
+function updateGlossaryCardSpotlight(event) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  event.currentTarget.style.setProperty("--spotlight-x", `${event.clientX - rect.left}px`);
+  event.currentTarget.style.setProperty("--spotlight-y", `${event.clientY - rect.top}px`);
 }
 
 function glossarySearchText(item) {
