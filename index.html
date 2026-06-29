@@ -113,7 +113,7 @@
       <section class="panel active" id="createPanel">
         <div class="section-title">
           <p class="eyebrow">Issuer Console</p>
-          <h2>Generate a new internship certificate</h2>
+          <h2>Generate a new certificate</h2>
         </div>
         <form id="issueForm" class="form-grid">
           <label>
@@ -121,11 +121,11 @@
             <input name="certificateTitle" required placeholder="Certificate of Internship Completion" />
           </label>
           <label>
-            Student Name
+            Name
             <input name="studentName" required placeholder="Aarav Sharma" />
           </label>
           <label>
-            Internship Title
+            Title
             <input name="internshipTitle" required placeholder="Blockchain Development Intern" />
           </label>
           <label>
@@ -147,6 +147,16 @@
           <label class="wide">
             Skills / Description
             <textarea name="description" required placeholder="Completed a supervised internship covering smart contracts, dApp development, wallet integration, and certificate verification workflows."></textarea>
+          </label>
+          <label class="file-upload">
+            Logo PNG
+            <input name="logoFile" accept="image/png" type="file" />
+            <small>Optional. Added to the centre top of the PDF certificate.</small>
+          </label>
+          <label class="file-upload">
+            Signature PNG
+            <input name="signatureFile" accept="image/png" type="file" />
+            <small>Optional. Added above Authorized Signature on the PDF.</small>
           </label>
           <div class="wide actions">
             <button class="primary" type="submit">Create On-Chain Certificate</button>

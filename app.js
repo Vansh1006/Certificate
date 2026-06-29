@@ -498,11 +498,13 @@ async function issueCertificate(event) {
 
   try {
     const details = getFormDetails(issueForm);
+    const certificateImages = await getCertificateImages(issueForm);
     setResult(issueResult, "Issuing certificate from approved backend issuer wallet...");
     const issue = await issueCertificateFromBackend(details);
 
     lastIssuedCertificate = {
       ...details,
+      ...certificateImages,
       certificateHash: issue.certificateHash,
       metadataURI: issue.metadataURI,
       pdfURI: "",
@@ -748,6 +750,7 @@ async function createCertificatePdfBlob(certificate) {
   qr.addData(qrUrl);
   qr.make();
   const qrDataUrl = qr.createDataURL(5, 1);
+  const hasLogo = Boolean(certificate.logoDataUrl);
 
   pdf.setFillColor(242, 248, 253);
   pdf.rect(0, 0, width, height, "F");
@@ -758,39 +761,43 @@ async function createCertificatePdfBlob(certificate) {
   pdf.setLineWidth(2);
   pdf.rect(46, 46, width - 92, height - 92);
 
+  if (certificate.logoDataUrl) {
+    await drawContainedImage(pdf, certificate.logoDataUrl, width / 2 - 45, 58, 90, 52);
+  }
+
   pdf.setFont("times", "bold");
   pdf.setFontSize(26);
   pdf.setTextColor(11, 107, 203);
-  pdf.text("N-DISC Blockchain Infrastructure", width / 2, 92, { align: "center" });
+  pdf.text("N-DISC Blockchain Infrastructure", width / 2, hasLogo ? 128 : 92, { align: "center" });
 
   pdf.setFontSize(18);
   pdf.setTextColor(96, 112, 134);
-  pdf.text(certificate.certificateTitle || "Certificate", width / 2, 126, { align: "center" });
+  pdf.text(certificate.certificateTitle || "Certificate", width / 2, hasLogo ? 158 : 126, { align: "center" });
 
   pdf.setFont("times", "normal");
   pdf.setFontSize(16);
   pdf.setTextColor(16, 32, 51);
-  pdf.text("This certificate is proudly presented to", width / 2, 180, { align: "center" });
+  pdf.text("This certificate is proudly presented to", width / 2, hasLogo ? 204 : 180, { align: "center" });
 
   pdf.setFont("times", "bold");
   pdf.setFontSize(36);
   pdf.setTextColor(16, 32, 51);
-  pdf.text(certificate.studentName || "Certificate Holder", width / 2, 226, { align: "center" });
+  pdf.text(certificate.studentName || "Certificate Holder", width / 2, hasLogo ? 248 : 226, { align: "center" });
 
   pdf.setFont("times", "normal");
   pdf.setFontSize(16);
-  pdf.text("for successfully completing the internship program as", width / 2, 268, { align: "center" });
+  pdf.text("for successfully completing", width / 2, hasLogo ? 288 : 268, { align: "center" });
 
   pdf.setFont("times", "bold");
   pdf.setFontSize(23);
   pdf.setTextColor(11, 107, 203);
-  pdf.text(certificate.internshipTitle || "Intern", width / 2, 306, { align: "center" });
+  pdf.text(certificate.internshipTitle || "Certificate Title", width / 2, hasLogo ? 324 : 306, { align: "center" });
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(11);
   pdf.setTextColor(72, 86, 104);
   const description = pdf.splitTextToSize(certificate.description || "Internship completed successfully.", 520);
-  pdf.text(description, width / 2, 350, { align: "center" });
+  pdf.text(description, width / 2, hasLogo ? 362 : 350, { align: "center" });
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
@@ -809,11 +816,64 @@ async function createCertificatePdfBlob(certificate) {
   pdf.text("Scan to verify on blockchain", width - 132, height - 82, { align: "center" });
 
   pdf.setDrawColor(16, 32, 51);
+  if (certificate.signatureDataUrl) {
+    await drawContainedImage(pdf, certificate.signatureDataUrl, width - 360, 436, 130, 46);
+  }
   pdf.line(width - 360, 488, width - 230, 488);
   pdf.setTextColor(16, 32, 51);
   pdf.text("Authorized Signature", width - 295, 512, { align: "center" });
 
   return pdf.output("blob");
+}
+
+async function getCertificateImages(form) {
+  const logoFile = form.elements.logoFile?.files?.[0];
+  const signatureFile = form.elements.signatureFile?.files?.[0];
+
+  return {
+    logoDataUrl: logoFile ? await readPngFileAsDataUrl(logoFile, "logo") : "",
+    signatureDataUrl: signatureFile ? await readPngFileAsDataUrl(signatureFile, "signature") : "",
+  };
+}
+
+function readPngFileAsDataUrl(file, label) {
+  if (file.type !== "image/png") {
+    throw new Error(`Please upload the ${label} as a PNG file.`);
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error(`The ${label} PNG must be smaller than 2 MB.`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error(`Could not read the ${label} PNG file.`));
+    reader.readAsDataURL(file);
+  });
+}
+
+function imageDimensions(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({ width: image.naturalWidth || image.width, height: image.naturalHeight || image.height });
+    image.onerror = () => reject(new Error("Could not load uploaded PNG image."));
+    image.src = dataUrl;
+  });
+}
+
+async function drawContainedImage(pdf, dataUrl, x, y, maxWidth, maxHeight) {
+  const dimensions = await imageDimensions(dataUrl);
+  const scale = Math.min(maxWidth / dimensions.width, maxHeight / dimensions.height);
+  const renderedWidth = dimensions.width * scale;
+  const renderedHeight = dimensions.height * scale;
+  pdf.addImage(
+    dataUrl,
+    "PNG",
+    x + (maxWidth - renderedWidth) / 2,
+    y + (maxHeight - renderedHeight) / 2,
+    renderedWidth,
+    renderedHeight
+  );
 }
 
 async function uploadPdfToBackend(blob, fileName, certificate) {

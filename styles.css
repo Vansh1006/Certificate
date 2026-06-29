@@ -1079,6 +1079,33 @@ textarea {
   resize: vertical;
 }
 
+input[type="file"] {
+  padding: 10px;
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.86);
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  min-height: 36px;
+  margin-right: 12px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: white;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.file-upload small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 input:focus,
 textarea:focus {
   border-color: var(--brand);
