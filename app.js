@@ -806,7 +806,6 @@ async function createCertificatePdfBlob(certificate) {
   pdf.text(`Issued by: ${certificate.issuerName || "N-DISC"}`, 90, 426);
   pdf.text(`Certificate ID: ${certificate.certificateId || "NDISC-CERT"}`, 90, 452);
   pdf.setFontSize(8.5);
-  drawWrappedMetadataLine(pdf, "Block ID", certificate.certificateHash || "Pending", 90, 478, 330);
   drawWrappedMetadataLine(pdf, "Transaction Hash", certificate.txHash || "Pending", 90, 510, 330);
 
   pdf.addImage(qrDataUrl, "PNG", width - 190, height - 210, 116, 116);
